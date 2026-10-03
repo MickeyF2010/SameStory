@@ -2,8 +2,12 @@ name: Update site
 
 on:
   schedule:
-    - cron: "10 */3 * * *"   # every 3 hours
+    - cron: "23 * * * *"     # every hour at 23 minutes past (UTC). Odd minute on purpose: GitHub skips or delays runs at busy times like :00
   workflow_dispatch:           # lets you run it by hand from the Actions tab
+  push:                        # rebuilds automatically whenever you upload or edit files
+    branches: [main]
+    paths-ignore:
+      - "**.md"
 
 concurrency:
   group: pages
