@@ -3,7 +3,7 @@
     "title": "Same Story",
     "tagline": "One UK politics story, as left-leaning, centre and right-leaning outlets each headline it.",
     "contact_url": "mailto:michaelfielduk@gmail.com",
-    "lean_rating_note": "Labels come from AllSides Media Bias Ratings (checked October 2026) and are grouped into three columns: Left and Lean Left appear as left-leaning, Center as centre, and Lean Right and Right as right-leaning. AllSides rates by the average judgment of mostly American reviewers, so its scale may not match how UK readers see these outlets, and several UK ratings are marked low confidence. GB News has no AllSides rating, so Media Bias/Fact Check's rating is used instead."
+    "lean_rating_note": "Labels come from AllSides Media Bias Ratings (checked October 2026), except the Daily Express and GB News, and are grouped into three columns: Left and Lean Left appear as left-leaning, Center as centre, and Lean Right and Right as right-leaning. AllSides rates by the average judgment of mostly American reviewers, so its scale may not match how UK readers see these outlets, and several UK ratings are marked low confidence. GB News has no AllSides rating, so Media Bias/Fact Check's rating is used instead; the Daily Express has no AllSides page, so Media Bias/Fact Check and its own editorial line are used."
   },
   "settings": {
     "max_age_hours": 48,
@@ -29,25 +29,42 @@
     "max_calls_per_run": 25,
     "retry_failed_after_hours": 6
   },
+  "archive": {
+    "ai_text_days": 14,
+    "removed": [],
+    "_removed_help": "To take a story down: add its story id (from data.json) or any of its article URLs to 'removed', then upload. It is deleted from the archive and kept off the front page on the next run.",
+    "_court_words_help": "Optional: add a 'court_words' list here to replace the built-in list in pipeline/archive.py."
+  },
   "sources": [
     {
       "id": "guardian",
       "name": "The Guardian",
       "lean": "left",
       "feeds": [
-        "https://www.theguardian.com/politics/rss"
+        "https://www.theguardian.com/politics/rss",
+        "https://www.theguardian.com/uk-news/rss"
       ],
       "rating": "AllSides: Left (low confidence)"
+    },
+    {
+      "id": "independent",
+      "name": "The Independent",
+      "lean": "left",
+      "feeds": [
+        "https://www.independent.co.uk/news/uk/politics/rss"
+      ],
+      "rating": "AllSides: Lean Left (Independent Review)"
     },
     {
       "id": "newstatesman",
       "name": "New Statesman",
       "lean": "left",
-      "enabled": false,
+      "enabled": true,
       "feeds": [
-        "https://www.newstatesman.com/politics/feed"
+        "https://www.newstatesman.com/feed"
       ],
-      "rating": ""
+      "rating": "No AllSides rating found",
+      "_feed_note": "The politics-only feed returns a web page to bots. The main feed works and carries politics."
     },
     {
       "id": "bbc",
@@ -63,18 +80,11 @@
       "name": "Sky News",
       "lean": "left",
       "feeds": [
-        "https://feeds.skynews.com/feeds/rss/politics.xml"
+        "https://feeds.skynews.com/feeds/rss/politics.xml",
+        "https://feeds.skynews.com/feeds/rss/home.xml"
       ],
-      "rating": "AllSides: Lean Left (low confidence)"
-    },
-    {
-      "id": "telegraph",
-      "name": "The Telegraph",
-      "lean": "right",
-      "feeds": [
-        "https://www.telegraph.co.uk/rss.xml"
-      ],
-      "rating": "AllSides: Lean Right"
+      "rating": "AllSides: Lean Left (low confidence)",
+      "_feed_note": "The politics feed is thin and can lag; the home feed is added as a fallback and duplicates are removed by URL."
     },
     {
       "id": "spectator",
@@ -102,7 +112,17 @@
       "feeds": [
         "https://www.dailymail.co.uk/news/index.rss"
       ],
-      "rating": "AllSides: Lean Right (high confidence)"
+      "rating": "AllSides: Lean Right (high confidence)",
+      "_feed_note": "The politics-only feed (uk-politics/index.rss) last carried an item in May 2026, so the news feed is used instead. It contains non-politics stories too, but only stories matched across outlets are ever shown."
+    },
+    {
+      "id": "express",
+      "name": "Daily Express",
+      "lean": "right",
+      "feeds": [
+        "https://www.express.co.uk/posts/rss/139/politics"
+      ],
+      "rating": "No AllSides rating (News Source Not Found). Media Bias/Fact Check: Right"
     },
     {
       "id": "mirror",
@@ -112,6 +132,62 @@
         "https://www.mirror.co.uk/news/politics/?service=rss"
       ],
       "rating": "AllSides: Left (low confidence)"
+    },
+    {
+      "id": "telegraph",
+      "name": "The Telegraph",
+      "lean": "right",
+      "feeds": [
+        "https://www.telegraph.co.uk/rss.xml"
+      ],
+      "rating": "AllSides: Lean Right",
+      "enabled": false
     }
-  ]
+  ],
+  "blindspots": {
+    "enabled": true,
+    "min_outlets": 2,
+    "tfidf_max_similarity": 0.15,
+    "embedding_max_similarity": 0.6,
+    "min_runs": 2,
+    "min_hours": 6,
+    "max_shown": 10,
+    "_help": "A story is listed as covered on one side only when at least min_outlets outlets on that side cover it, no outlet on the other side does, EVERY feed on the other side loaded with items in that run, no other-side headline anywhere in the window scores above the similarity limit, and it has held in min_runs runs over min_hours. Wording on the site is always 'not found in our sources', never 'ignored'."
+  },
+  "words": {
+    "enabled": true,
+    "days": 90,
+    "min_headlines": 15,
+    "_help": "Word pairs counted over archived headlines from stories that both left- and right-leaning outlets covered. Rates per column, not raw counts. Only add pairs here you are happy to publish.",
+    "pairs": [
+      {
+        "a": "migrant",
+        "b": "asylum seeker"
+      },
+      {
+        "a": "small boat",
+        "b": "channel crossing"
+      },
+      {
+        "a": "tax",
+        "b": "levy"
+      },
+      {
+        "a": "crackdown",
+        "b": "reform"
+      },
+      {
+        "a": "backlog",
+        "b": "waiting list"
+      },
+      {
+        "a": "growth",
+        "b": "recession"
+      },
+      {
+        "a": "illegal",
+        "b": "irregular"
+      }
+    ]
+  }
 }

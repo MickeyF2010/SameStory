@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
 
+from .blindspots import Blindspot
 from .models import Article, Story
 
 
@@ -17,7 +18,7 @@ def demo_config(cfg: dict) -> dict:
     return demo
 
 
-def demo_stories(now: datetime = None) -> list:
+def demo_stories(now: datetime = None) -> tuple:
     now = now or datetime.now(timezone.utc)
 
     def art(oid, name, lean, title, summary, mins):
@@ -67,4 +68,20 @@ def demo_stories(now: datetime = None) -> list:
         outlet_count=3, latest=now - timedelta(minutes=185),
         comparison=None,
     )
-    return [s1, s2]
+    # Invented one-sided coverage, so the Blindspots section can be previewed. These are
+    # fictional outlets and a fictional story: nothing here claims anything about a real outlet.
+    spots = [
+        Blindspot(
+            id="demo000003", side="right",
+            articles=[
+                art("standard", "The Albion Standard (fictional)", "right",
+                    "Ministers face questions over ferry contract award", "", 240),
+                art("ledger2", "The Northern Ledger (fictional)", "right",
+                    "Ferry contract row grows as officials called to explain", "", 260),
+            ],
+            first_checked=now - timedelta(hours=7), last_checked=now - timedelta(minutes=20),
+            runs=3, checked_sources=["The Daily Lantern (fictional)", "Channel Wire (fictional)"],
+            max_similarity=0.04,
+        ),
+    ]
+    return [s1, s2], spots

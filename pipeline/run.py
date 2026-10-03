@@ -15,7 +15,8 @@ import os
 import sys
 from datetime import datetime, timezone
 
-from . import build, compare, fetch, match, sample, stories as stories_mod
+from . import blindspots, build, compare, fetch, match, sample, stories as stories_mod, words as words_mod
+from .archive import Archive, ArchiveError, is_removed, removed_keys
 from .cache import Cache
 from .llm import LLM, LLMError
 
@@ -69,6 +70,8 @@ def main(argv=None) -> int:
     parser.add_argument("--config", default=os.path.join(ROOT, "config.json"))
     parser.add_argument("--out", default=os.path.join(ROOT, "site_out"))
     parser.add_argument("--cache", default=os.path.join(ROOT, "data", "cache.json"))
+    parser.add_argument("--archive", default=os.path.join(ROOT, "data", "archive.json"),
+                        help="archive file to read and update (stored on the 'archive' branch by the workflow)")
     parser.add_argument("--demo", action="store_true", help="build the site from invented demo data")
     parser.add_argument("--no-ai", action="store_true", help="skip every AI call")
     parser.add_argument("--check-feeds", action="store_true", help="test each feed URL and exit")
@@ -91,11 +94,16 @@ def main(argv=None) -> int:
     if args.demo:
         cfg = sample.demo_config(cfg)
         meta["demo"] = True
-        build.write_site(sample.demo_stories(now), cfg, args.out, meta, system_prompt)
+        demo, demo_spots = sample.demo_stories(now)
+        preview = Archive(None, cfg.get("archive"))   # in memory only: the demo never touches the real archive
+        preview.record(demo, now)
+        words_stats = words_mod.compute(preview.sorted_entries(), cfg, now)
+        build.write_site(demo, cfg, args.out, meta, system_prompt, preview.sorted_entries(),
+                         blindspots=demo_spots, word_stats=words_stats)
         print(f"Demo site written to {args.out}/index.html")
         return 0
 
-    articles = fetch.fetch_all(cfg)
+    articles, source_status = fetch.fetch_all_with_status(cfg)
     if not articles:
         log.error("No articles could be fetched from any feed. Not publishing an empty site.")
         return 1
@@ -113,7 +121,19 @@ def main(argv=None) -> int:
         print_groups(articles, groups)
         return 0
 
+    try:
+        archive = Archive(args.archive, cfg.get("archive"))
+    except ArchiveError as exc:
+        log.error("%s", exc)
+        return 1
+
     story_list = stories_mod.select_stories(articles, groups, vectors, cfg["settings"]) if articles else []
+    removed = removed_keys(cfg.get("archive"))
+    if removed:
+        before = len(story_list)
+        story_list = [s for s in story_list if not is_removed(s, removed)]
+        if len(story_list) < before:
+            log.info("%d story(ies) withheld because they are on the removed list", before - len(story_list))
     log.info("%d stories meet the coverage rules", len(story_list))
 
     if llm is not None and story_list:
@@ -135,7 +155,35 @@ def main(argv=None) -> int:
         ]
         story_list = kept
 
-    build.write_site(story_list, cfg, args.out, meta, system_prompt)
+    # One-sided coverage, computed by code only (never by the AI). Its watch state is kept in
+    # the archive file, so a story has to go uncovered for several runs before it is shown.
+    spots = []
+    if cfg.get("blindspots", {}).get("enabled", True):
+        spots = blindspots.update(archive.blindspot_watch, articles, groups, vectors, source_status,
+                                  cfg, now, method, exclude_urls=removed, removed=removed)
+        shown_urls = {a.url for s in story_list for a in s.picks.values()}
+        shown_urls |= {a.url for s in story_list for a in s.others}
+        spots = [b for b in spots if not ({a.url for a in b.articles} & shown_urls)]
+        for b in spots:
+            log.info("Blindspot: %s-leaning only (%d outlets): %s", b.side, b.outlet_count,
+                     " | ".join(a.title for a in b.articles[:2]))
+    meta["blindspots"] = [
+        {"id": b.id, "side": b.side, "missing": b.missing, "outlet_count": b.outlet_count,
+         "runs": b.runs, "first_checked": b.first_checked.isoformat(),
+         "last_checked": b.last_checked.isoformat(), "checked_sources": b.checked_sources,
+         "max_similarity": b.max_similarity,
+         "articles": [{"outlet": a.outlet, "lean": a.lean, "title": a.title, "url": a.url,
+                       "published": a.published.isoformat() if a.published else None} for a in b.articles]}
+        for b in spots
+    ]
+
+    new = archive.record(story_list, now)
+    archive.save(now)   # also saves the blindspot watch state kept in the same file
+    log.info("Archive: %d new, %d in total", new, len(archive.entries))
+
+    word_stats = words_mod.compute(archive.sorted_entries(), cfg, now)
+    build.write_site(story_list, cfg, args.out, meta, system_prompt, archive.sorted_entries(),
+                     blindspots=spots, word_stats=word_stats)
     log.info("Site written to %s", args.out)
     return 0
 

@@ -14,9 +14,12 @@ It does not claim to be unbiased. It shows the original headlines side by side, 
 | `pipeline/stories.py` | Applies the published rules: at least 3 outlets, must include a left and a right outlet, ranked by breadth then recency. |
 | `pipeline/compare.py` | Asks the AI to describe framing, then checks its answer before showing it. |
 | `prompts/system.txt` | The exact instructions given to the AI. Shown on the site's "How it works" page. |
-| `pipeline/build.py`, `style.css` | Generates the static HTML pages. |
+| `pipeline/build.py`, `style.css` | Generates the static HTML pages: front page, Words, archive, How it works. |
+| `pipeline/archive.py` | Keeps a permanent list of every story shown, stored on a separate `archive` branch. AI descriptions are deleted after 14 days, and never kept for court cases. |
 | `.github/workflows/update.yml` | Rebuilds and publishes the site every hour (and whenever you upload changes), free, on GitHub. |
-| `tests/` | 27 tests. Run with `python -m unittest discover -s tests`. |
+| `pipeline/blindspots.py` | Works out which stories only one column covered. Code only, never the AI. |
+| `pipeline/words.py` | Counts word pairs across archived headlines. Counting only, never the AI. |
+| `tests/` | 85 tests. Run with `python -m unittest discover -s tests`. |
 
 ## 1. Preview it in 30 seconds (no internet, no API key)
 
@@ -36,7 +39,7 @@ python -m pipeline.run --check-feeds
 This prints OK or FAIL for every feed in `config.json`. I could not test live feeds while building this, so run it first. Fix or remove any that fail. Notes:
 
 - Reuters no longer offers an official public RSS feed, so it isn't in the list.
-- The Telegraph feed is the site-wide one, so it contains non-politics stories too. That's fine, because only stories matched across outlets are shown.
+- The Telegraph feed is the site-wide one, so it contains non-politics stories too. Only stories matched across outlets are shown, but in a later check it supplied almost no politics stories, so it may need replacing.
 - Daily Mail and Daily Mirror feeds were confirmed working in a real test and are switched on. The Spectator is switched off because its feed address returned an error; New Statesman may fail with a "not well-formed" or "web page" message, in which case set `"enabled": false` for it too.
 - Some outlets block requests from cloud servers. If one works on your computer but fails on GitHub, drop it or swap it.
 

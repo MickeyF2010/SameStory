@@ -68,6 +68,7 @@ def select_stories(articles: list, groups: list, vectors: np.ndarray, settings: 
                 others=others,
                 outlet_count=len(outlets),
                 latest=max(dates) if dates else None,
+                members=arts,
             )
         )
 

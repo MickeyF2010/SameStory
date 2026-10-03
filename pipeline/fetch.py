@@ -152,15 +152,32 @@ def enabled_sources(cfg: dict) -> list:
     return [s for s in cfg["sources"] if s.get("enabled", True)]
 
 
-def fetch_all(cfg: dict) -> list:
-    all_articles = []
+def fetch_all_with_status(cfg: dict) -> tuple:
+    """Return (articles, status). status maps each enabled source id to
+    {name, lean, ok, count, errors, newest}. `ok` means every feed for that source loaded AND
+    returned at least one recent item: a feed that parses but is empty or stale is not evidence
+    that an outlet covered nothing, so blindspots must never treat it as a loaded feed."""
+    all_articles, status = [], {}
     for source in enabled_sources(cfg):
         articles, errors = fetch_source(source, cfg["settings"])
         for err in errors:
             log.warning("Feed problem: %s", err)
-        log.info("%s: %d articles", source["name"], len(articles))
+        recent = filter_recent(articles, cfg["settings"].get("max_age_hours", 48))
+        newest = max((a.published for a in articles if a.published), default=None)
+        ok = not errors and bool(recent)
+        if not errors and not recent:
+            log.warning("%s: feed loaded but nothing recent in it (newest %s)", source["name"],
+                        newest.strftime("%Y-%m-%d") if newest else "no dates")
+        log.info("%s: %d articles (%d recent)", source["name"], len(articles), len(recent))
+        status[source["id"]] = {"name": source["name"], "lean": source["lean"], "ok": ok,
+                                "count": len(articles), "recent": len(recent),
+                                "newest": newest.isoformat() if newest else None, "errors": errors}
         all_articles.extend(articles)
-    return all_articles
+    return all_articles, status
+
+
+def fetch_all(cfg: dict) -> list:
+    return fetch_all_with_status(cfg)[0]
 
 
 def filter_recent(articles: list, max_age_hours: float, now: Optional[datetime] = None) -> list:

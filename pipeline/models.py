@@ -27,3 +27,4 @@ class Story:
     outlet_count: int = 0
     latest: Optional[datetime] = None
     comparison: Optional[dict] = None
+    members: list = field(default_factory=list)   # every Article in the group, shown or not
