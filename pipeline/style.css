@@ -69,7 +69,11 @@ a:focus-visible { outline: 3px solid var(--link); outline-offset: 2px; border-ra
 .meta { display: flex; flex-wrap: wrap; gap: 0.25rem 1.25rem; margin: 0.4rem 0 0; color: var(--muted); font-size: 0.9rem; }
 
 .cols { display: grid; gap: 0; margin-top: 1.25rem; grid-template-columns: 1fr; }
-@media (min-width: 880px) { .cols { grid-template-columns: repeat(var(--cols, 3), minmax(0, 1fr)); } }
+@media (min-width: 880px) {
+  .cols-1 { grid-template-columns: minmax(0, 1fr); }
+  .cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
 .col { padding: 1.1rem 0 1.25rem; border-top: 1px solid var(--line); }
 @media (min-width: 880px) {
   .col { padding: 0.25rem 1.5rem 0.5rem; border-top: 0; border-left: 1px solid var(--line); }

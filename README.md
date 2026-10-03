@@ -15,7 +15,7 @@ It does not claim to be unbiased. It shows the original headlines side by side, 
 | `pipeline/compare.py` | Asks the AI to describe framing, then checks its answer before showing it. |
 | `prompts/system.txt` | The exact instructions given to the AI. Shown on the site's "How it works" page. |
 | `pipeline/build.py`, `style.css` | Generates the static HTML pages. |
-| `.github/workflows/update.yml` | Rebuilds and publishes the site every 3 hours, free, on GitHub. |
+| `.github/workflows/update.yml` | Rebuilds and publishes the site every hour (and whenever you upload changes), free, on GitHub. |
 | `tests/` | 27 tests. Run with `python -m unittest discover -s tests`. |
 
 ## 1. Preview it in 30 seconds (no internet, no API key)
@@ -71,7 +71,7 @@ Change the default model in `config.json` under `llm.model` if Google renames or
 3. Go to **Settings → Pages**, and under **Build and deployment** set **Source** to **GitHub Actions**.
 4. Go to the **Actions** tab, choose **Update site**, and click **Run workflow**.
 
-After a minute or two your site is live at the address shown in the Pages settings. It then refreshes itself every 3 hours. GitHub pauses scheduled workflows on repos with no activity for 60 days, so if updates stop, click **Run workflow** once to restart them.
+After a minute or two your site is live at the address shown in the Pages settings. It then refreshes itself every hour. GitHub's schedule is best effort, so a run can start late or occasionally be skipped. GitHub pauses scheduled workflows on repos with no activity for 60 days, so if updates stop, click **Run workflow** once to restart them.
 
 Add your own domain later under **Settings → Pages**.
 

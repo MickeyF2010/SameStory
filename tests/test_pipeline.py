@@ -354,6 +354,21 @@ class BuildTests(unittest.TestCase):
         self.assertIn("at least 3 different outlets cover it.", relaxed)
         self.assertNotIn("includes a", relaxed)
 
+    def test_pages_have_strict_csp_and_no_inline_styles_or_scripts(self):
+        cfg = sample.demo_config(load_cfg())
+        with tempfile.TemporaryDirectory() as d:
+            build.write_site(sample.demo_stories(NOW), cfg, d, {"generated": NOW, "demo": True, "prompt_version": "5"}, "p")
+            for name in ("index.html", "how-it-works.html"):
+                with open(os.path.join(d, name), encoding="utf-8") as fh:
+                    page = fh.read()
+                self.assertIn("Content-Security-Policy", page)
+                self.assertIn("default-src 'none'", page)
+                self.assertIn('name="referrer"', page)
+                self.assertNotIn(" style=", page)
+                self.assertNotIn("<script", page)
+                self.assertNotIn("<style", page)
+        self.assertIn('class="cols cols-3"', build.story_html(sample.demo_stories(NOW)[0]))
+
     def test_how_page_lists_published_ratings(self):
         how = build.build_how(load_cfg(), {"generated": NOW, "prompt_version": "5"}, "p")
         self.assertIn("AllSides: Lean Right (high confidence)", how)

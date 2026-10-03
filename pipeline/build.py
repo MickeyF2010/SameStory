@@ -70,6 +70,8 @@ def page(cfg: dict, title: str, body: str, active: str) -> str:
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self'; img-src 'self' data:; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="strict-origin-when-cross-origin">
 <title>{esc(title)}</title>
 <meta name="description" content="{esc(site['tagline'])}">
 <link rel="stylesheet" href="style.css">
@@ -155,7 +157,7 @@ def story_html(story: Story) -> str:
     <h2>{esc(topic)}</h2>
     <p class="meta"><span>{story.outlet_count} outlets covering it</span>{latest}</p>
   </div>
-  <div class="cols" style="--cols:{len(leans)}">
+  <div class="cols cols-{len(leans)}">
 {cols}
   </div>
   {analysis}
