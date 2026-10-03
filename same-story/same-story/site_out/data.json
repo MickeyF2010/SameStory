@@ -1,0 +1,277 @@
+{
+  "generated": "2026-10-03T10:09:57.740500+00:00",
+  "dropped_as_unrelated": [],
+  "stories": [
+    {
+      "id": "d8b69eabba",
+      "outlet_count": 5,
+      "comparison": {
+        "same_story": true,
+        "same_development": true,
+        "topic": "Terrorism charges against an Ann Widdecombe murder suspect",
+        "agreed_facts": [
+          "The Ann Widdecombe murder suspect has been charged with preparing terrorist acts against Nigel Farage",
+          "Joshua Kerry is 28 years old"
+        ],
+        "main_difference": "Sky News does not name the suspect in the headline or standfirst, whereas Daily Mirror and GB News name Joshua Kerry, 28, in their texts.",
+        "outlets": {
+          "sky": {
+            "emphasis": "Sky News leads with the suspect being charged with preparing terror acts including against Nigel Farage.",
+            "wording": []
+          },
+          "mirror": {
+            "emphasis": "Daily Mirror foregrounds the suspect's name and age alongside the terror charges involving Nigel Farage, attributing the information to Counter Terrorism Policing.",
+            "wording": []
+          },
+          "gbnews": {
+            "emphasis": "GB News foregrounds the terror charges against Nigel Farage while providing the suspect's name and age.",
+            "wording": []
+          }
+        }
+      },
+      "articles": {
+        "left": {
+          "outlet": "Daily Mirror",
+          "title": "Ann Widdecombe murder suspect charged with preparing acts of terrorism against Reform UK leader Nigel Farage",
+          "url": "https://www.mirror.co.uk/news/uk-news/nigel-farage-charge-man-terror-37729574",
+          "published": "2026-10-02T18:13:01+00:00"
+        },
+        "centre": {
+          "outlet": "Sky News",
+          "title": "Ann Widdecombe murder suspect charged with preparing terror acts including against Nigel Farage",
+          "url": "https://news.sky.com/story/man-charged-with-preparing-terrorist-acts-against-nigel-farage-13594244",
+          "published": "2026-10-02T06:56:00+00:00"
+        },
+        "right": {
+          "outlet": "GB News",
+          "title": "Ann Widdecombe murder suspect charged with preparing terror act against Nigel Farage",
+          "url": "https://www.gbnews.com/news/ann-widdecombe-suspect-charged-joshua-kerry-terror-act-nigel-farage",
+          "published": "2026-10-02T18:12:58+00:00"
+        }
+      }
+    },
+    {
+      "id": "7c6e1e5b0e",
+      "outlet_count": 4,
+      "comparison": {
+        "same_story": true,
+        "same_development": false,
+        "topic": "Andy Burnham and Manchester City",
+        "agreed_facts": [],
+        "main_difference": "GB News covers calls for transparency regarding meetings and hospitality. BBC News provides a political analysis of an about-turn by the prime minister. The Guardian examines the historical link between Manchester City's success and Burnham's rise to power alongside critics' views.",
+        "outlets": {
+          "gbnews": {
+            "emphasis": "Calls from the Liberal Democrats for Andy Burnham to share details of meetings and hospitality.",
+            "wording": [
+              "facing calls",
+              "urged"
+            ]
+          },
+          "bbc": {
+            "emphasis": "An analysis by the BBC political editor regarding the prime minister's comments and about-turn.",
+            "wording": [
+              "about-turn",
+              "revealing",
+              "leapt on"
+            ]
+          },
+          "guardian": {
+            "emphasis": "The connection between Manchester City's success and Andy Burnham's political rise, alongside criticism of the partnership.",
+            "wording": [
+              "huge partner",
+              "ignores public cost"
+            ]
+          }
+        }
+      },
+      "articles": {
+        "left": {
+          "outlet": "The Guardian",
+          "title": "How success of Manchester City helped put Andy Burnham in power",
+          "url": "https://www.theguardian.com/politics/2026/oct/01/success-manchester-city-helped-put-andy-burnham-in-power",
+          "published": "2026-10-01T18:53:05+00:00"
+        },
+        "centre": {
+          "outlet": "BBC News",
+          "title": "Chris Mason: Why Andy Burnham's about-turn on Manchester City matters",
+          "url": "https://www.bbc.co.uk/news/articles/c5kg0gwwpyx8o?at_medium=RSS&at_campaign=rss",
+          "published": "2026-10-01T22:22:43+00:00"
+        },
+        "right": {
+          "outlet": "GB News",
+          "title": "Andy Burnham facing calls to share details of meetings with Manchester City owners",
+          "url": "https://www.gbnews.com/sport/football/andy-burnham-manchester-city-owners",
+          "published": "2026-10-02T16:17:38+00:00"
+        }
+      }
+    },
+    {
+      "id": "3eacddb9ce",
+      "outlet_count": 3,
+      "comparison": {
+        "same_story": true,
+        "same_development": false,
+        "topic": "Green Party conference and leadership developments",
+        "agreed_facts": [],
+        "main_difference": "GB News covers a former deputy leader's criticism regarding conference bans and gender-critical views, while Daily Mirror covers Zack Polanski's conference speech and awkward polling figures.",
+        "outlets": {
+          "gbnews": {
+            "emphasis": "GB News foregrounds criticism from a former deputy leader who accuses the party of being anti-women after being banned from the conference.",
+            "wording": [
+              "anti-women",
+              "persecuted"
+            ]
+          },
+          "mirror": {
+            "emphasis": "Daily Mirror foregrounds Zack Polanski's assessment of a seismic year contrasted with polling suggesting the party's bubble has burst.",
+            "wording": [
+              "seismic year",
+              "bubble has burst"
+            ]
+          }
+        }
+      },
+      "articles": {
+        "left": {
+          "outlet": "Daily Mirror",
+          "title": "Zack Polanski hails seismic year - but awkward polls suggest Green Party bubble has burst",
+          "url": "https://www.mirror.co.uk/news/politics/zack-polanski-hails-seismic-year-37728985",
+          "published": "2026-10-03T07:36:44+00:00"
+        },
+        "right": {
+          "outlet": "GB News",
+          "title": "Zack Polanski's Greens branded 'anti-women' by ex-deputy leader after being 'persecuted' over gender-critical views",
+          "url": "https://www.gbnews.com/politics/zack-polanski-green-party-branded-anti-women-shahrar-ali-ex-deputy-leader-persecuted",
+          "published": "2026-10-02T16:44:34+00:00"
+        }
+      }
+    },
+    {
+      "id": "1341b57a65",
+      "outlet_count": 3,
+      "comparison": {
+        "same_story": true,
+        "same_development": true,
+        "topic": "State pension triple lock policy changes",
+        "agreed_facts": [
+          "Andy Burnham plans to scrap the state pension triple lock",
+          "MPs will vote on the plans",
+          "A guarantee will remain until 2030"
+        ],
+        "main_difference": "GB News emphasises an broken promise and an early axe, while The Guardian focuses on the legislative timeline within the current parliament.",
+        "outlets": {
+          "gbnews": {
+            "emphasis": "Andy Burnham breaking a previous promise by axing the triple lock early, with a vote expected before the next general election.",
+            "wording": [
+              "axe",
+              "despite promising",
+              "no change"
+            ]
+          },
+          "guardian": {
+            "emphasis": "Andy Burnham passing legislation to scrap the triple lock within the current parliament while the guarantee remains until 2030.",
+            "wording": [
+              "scrapping",
+              "guarantee will remain"
+            ]
+          }
+        }
+      },
+      "articles": {
+        "left": {
+          "outlet": "The Guardian",
+          "title": "Burnham to pass law scrapping pension triple lock before next election",
+          "url": "https://www.theguardian.com/politics/2026/oct/02/burnham-law-pension-triple-lock",
+          "published": "2026-10-02T16:39:11+00:00"
+        },
+        "right": {
+          "outlet": "GB News",
+          "title": "Andy Burnham to axe triple lock early despite promising pensioners no change until 2030",
+          "url": "https://www.gbnews.com/politics/andy-burnham-triple-lock-scrapped",
+          "published": "2026-10-02T20:43:57+00:00"
+        }
+      }
+    },
+    {
+      "id": "8b9b57a9c7",
+      "outlet_count": 3,
+      "comparison": {
+        "same_story": true,
+        "same_development": false,
+        "topic": "Green Party debate and motion on Zionism",
+        "agreed_facts": [],
+        "main_difference": "GB News covers the condemnation of Zack Polanski by former Green leaders over the motion, whereas The Guardian focuses on explaining the definition and history of Zionism in the context of the Green party debate.",
+        "outlets": {
+          "gbnews": {
+            "emphasis": "GB News puts first the condemnation of Zack Polanski by former Green leaders over the motion.",
+            "wording": [
+              "condemned"
+            ]
+          },
+          "guardian": {
+            "emphasis": "The Guardian puts first an explanatory breakdown of the term Zionism and why critics describe it as racist.",
+            "wording": [
+              "contested"
+            ]
+          }
+        }
+      },
+      "articles": {
+        "left": {
+          "outlet": "The Guardian",
+          "title": "What is Zionism and why do some critics describe it as racist?",
+          "url": "https://www.theguardian.com/world/2026/oct/03/what-is-zionism-green-party-debate",
+          "published": "2026-10-03T06:00:51+00:00"
+        },
+        "right": {
+          "outlet": "GB News",
+          "title": "Zack Polanski condemned by former Green leaders over motion defining Zionism as racism",
+          "url": "https://www.gbnews.com/politics/politics-news-andy-burnham-eu-labour-robert-jenrick-reform-uk",
+          "published": "2026-10-02T06:43:19+00:00"
+        }
+      }
+    },
+    {
+      "id": "999175253f",
+      "outlet_count": 3,
+      "comparison": {
+        "same_story": true,
+        "same_development": false,
+        "topic": "Diesel supply and export restrictions",
+        "agreed_facts": [],
+        "main_difference": "Daily Mirror covers early concerns about a potential Trump ban and record diesel prices alongside a minister's reassurances, while Daily Mail covers the later development that Trump dropped the ban threat and Europe agreed to release reserves.",
+        "outlets": {
+          "mirror": {
+            "emphasis": "Diesel reaching a record price and a minister attempting to reassure the public regarding UK supply amid shortage fears and a potential Trump ban.",
+            "wording": [
+              "record £2",
+              "reassured",
+              "shortage fears"
+            ]
+          },
+          "dailymail": {
+            "emphasis": "Donald Trump dropping the diesel export ban threat and Europe agreeing to release reserves following pressure over energy prices.",
+            "wording": [
+              "massive",
+              "pressured"
+            ]
+          }
+        }
+      },
+      "articles": {
+        "left": {
+          "outlet": "Daily Mirror",
+          "title": "Diesel hits record £2 - as drivers 'reassured' UK can cope with Trump ban threat amid shortage fears",
+          "url": "https://www.mirror.co.uk/news/politics/uk-diesel-stockpiles-fuel-prices-37726535",
+          "published": "2026-10-02T09:16:36+00:00"
+        },
+        "right": {
+          "outlet": "Daily Mail",
+          "title": "Trump drops diesel export ban threat before US mid-terms - as Europe agrees to release reserves",
+          "url": "https://www.dailymail.com/news/article-16177797/Britain-diesel-winter-Burnham-Europe-Trump-emergency-stocks-US-mid-terms-November.html?ns_mchannel=rss&ns_campaign=1490&ito=1490",
+          "published": "2026-10-02T16:09:32+00:00"
+        }
+      }
+    }
+  ]
+}
