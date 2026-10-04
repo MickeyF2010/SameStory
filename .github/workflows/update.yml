@@ -11,11 +11,13 @@ on:
 
 concurrency:
   group: pages
-  cancel-in-progress: false
+  cancel-in-progress: false    # runs queue up instead of overlapping, so two runs never write the archive at once
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write          # needed to save the archive to the 'archive' branch
     steps:
       - uses: actions/checkout@v4
 
@@ -35,10 +37,43 @@ jobs:
           key: ai-cache-${{ github.run_id }}
           restore-keys: ai-cache-
 
+      # The archive lives on its own branch, not in main, so it never clutters your files.
+      # If the branch can't be reached for any reason other than "it doesn't exist yet",
+      # the run stops rather than start an empty archive and overwrite the real one.
+      - name: Load archive
+        run: |
+          mkdir -p data
+          set +e
+          git ls-remote --exit-code --heads origin archive > /dev/null
+          code=$?
+          set -e
+          if [ "$code" -eq 2 ]; then
+            echo "No archive branch yet: starting a new archive."
+          elif [ "$code" -ne 0 ]; then
+            echo "Could not check for the archive branch (exit $code). Stopping so the archive isn't lost."
+            exit 1
+          else
+            git fetch --depth=1 origin archive
+            git show FETCH_HEAD:archive.json > data/archive.json
+            echo "Archive loaded: $(wc -c < data/archive.json) bytes."
+          fi
+
       - name: Build site
         run: python -m pipeline.run
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+
+      # Saves the archive as one brand-new commit with no history, replacing the branch.
+      # That way text the archive deletes (old AI descriptions, removed stories) doesn't
+      # sit in the branch's history.
+      - name: Save archive
+        run: |
+          blob=$(git hash-object -w data/archive.json)
+          tree=$(printf '100644 blob %s\tarchive.json\n' "$blob" | git mktree)
+          commit=$(git -c user.name="github-actions[bot]" \
+                       -c user.email="41898283+github-actions[bot]@users.noreply.github.com" \
+                       commit-tree "$tree" -m "Archive update")
+          git push --force origin "$commit:refs/heads/archive"
 
       - uses: actions/upload-pages-artifact@v3
         with:
