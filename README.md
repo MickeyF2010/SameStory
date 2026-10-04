@@ -19,7 +19,7 @@ It does not claim to be unbiased. It shows the original headlines side by side, 
 | `.github/workflows/update.yml` | Rebuilds and publishes the site every hour (and whenever you upload changes), free, on GitHub. |
 | `pipeline/blindspots.py` | Works out which stories only one column covered. Code only, never the AI. |
 | `pipeline/words.py` | Counts word pairs across archived headlines. Counting only, never the AI. |
-| `tests/` | 85 tests. Run with `python -m unittest discover -s tests`. |
+| `tests/` | 88 tests. Run with `python -m unittest discover -s tests`. |
 
 ## 1. Preview it in 30 seconds (no internet, no API key)
 

@@ -208,13 +208,44 @@ def build_blindspots(spots: list, cfg: dict, demo: bool = False) -> str:
              f'"Not found in our sources" means exactly that. It is not a claim about what any outlet '
              f'chose to do. A story has to stay missing for {esc(st.get("min_runs", 2))} checks over at least '
              f'{esc(st.get("min_hours", 6))} hours before it appears here, and it is dropped the moment any headline on the '
-             f'other side looks related. <a href="how-it-works.html">How this is worked out</a>.</p>')
+             f'other side looks related. <a href="blindspots.html">Dedicated page</a> · <a href="how-it-works.html">How this is worked out</a>.</p>')
     items = "".join(blindspot_html(b, demo) for b in spots)
-    return f"""<section class="spots" aria-label="Covered on one side only">
+    return f"""<section class="spots" id="blindspots" aria-label="Covered on one side only">
   <h2>Covered on one side only</h2>
   {intro}
   <ol class="spot-list-all">{items}</ol>
 </section>"""
+
+
+def build_blindspots_page(cfg: dict, spots: list, meta: Optional[dict] = None) -> str:
+    meta = meta or {}
+    demo = bool(meta.get("demo"))
+    st = cfg.get("blindspots") or {}
+    min_runs = st.get("min_runs", 2)
+    min_hours = st.get("min_hours", 6)
+    demo_banner = '<p class="demo-banner" role="note">Demo data. These outlets and stories are invented to show the layout.</p>' if demo else ""
+    intro = (f'<p class="spot-intro">Stories below were found in at least two outlets of one column and in none of '
+             f'the other, in every feed checked. This is worked out by the program from the feeds alone, never by the AI. '
+             f'"Not found in our sources" means exactly that. It is not a claim about what any outlet '
+             f'chose to do. A story has to stay missing for {esc(min_runs)} checks over at least '
+             f'{esc(min_hours)} hours before it appears here, and it is dropped the moment any headline on the '
+             f'other side looks related. <a href="how-it-works.html">How this is worked out</a>.</p>')
+    if spots:
+        items = "".join(blindspot_html(b, demo) for b in spots)
+        content = f'<ol class="spot-list-all">{items}</ol>'
+    else:
+        content = (f'<div class="empty-spots">'
+                   f'<h3>No one-sided coverage detected right now</h3>'
+                   f'<p>Every story currently tracked is either covered across both sides or has not met the strict criteria to be listed here.</p>'
+                   f'<p class="spot-check">To prevent false claims, a story only appears here if it is covered by at least 2 outlets on one side, 0 on the other, every opposing feed is verified healthy and recent, and the gap persists across checks spanning at least {esc(min_hours)} hours.</p>'
+                   f'</div>')
+    body = f"""{demo_banner}
+<div class="spots-page">
+  <h1>Covered on one side only</h1>
+  {intro}
+  {content}
+</div>"""
+    return page(cfg, f"Covered on one side only: {cfg['site']['title']}", body, "blindspots")
 
 
 def build_index(stories: list, cfg: dict, meta: dict, spots=None) -> str:
@@ -230,9 +261,28 @@ def build_index(stories: list, cfg: dict, meta: dict, spots=None) -> str:
     else:
         body_stories = """<section class="empty"><h2>No stories to compare right now</h2>
 <p>A story appears here when at least three outlets, including a left-leaning and a right-leaning one, cover it. Check back after the next update.</p></section>"""
+
+    pill = ""
+    if cfg.get("blindspots", {}).get("enabled", True):
+        spot_list = spots or []
+        count = len(spot_list)
+        if count == 0:
+            pill_cls = "spot-pill"
+            pill_label = "One-sided coverage: 0 active &rarr;"
+        elif count == 1:
+            pill_cls = "spot-pill has-spots"
+            pill_label = "One-sided coverage: 1 active &rarr;"
+        else:
+            pill_cls = "spot-pill has-spots"
+            pill_label = f"One-sided coverage: {count} active &rarr;"
+        pill = f'<p class="spot-pill-p"><a class="{pill_cls}" href="blindspots.html"><span class="spot-pill-dot" aria-hidden="true"></span>{pill_label}</a></p>'
+
     body = f"""{demo}
 <div class="intro">
-  <p class="updated">Updated <time datetime="{meta['generated'].isoformat()}">{updated.day} {updated:%b %Y, %H:%M}</time>. Stories are listed by how many outlets cover them, then by recency, never by engagement.</p>
+  <div class="intro-main">
+    <p class="updated">Updated <time datetime="{meta['generated'].isoformat()}">{updated.day} {updated:%b %Y, %H:%M}</time>. Stories are listed by how many outlets cover them, then by recency, never by engagement.</p>
+    {pill}
+  </div>
   {legend}
 </div>
 {body_stories}
@@ -307,7 +357,7 @@ def build_how(cfg: dict, meta: dict, system_prompt: str) -> str:
 </ul>
 
 <h2>Covered on one side only ("blindspots")</h2>
-<p>Some stories are picked up by one column of outlets and not the other. Those are listed in a separate section, and this is
+<p>Some stories are picked up by one column of outlets and not the other. Those are listed on the <a href="blindspots.html">Covered on one side only</a> page, and this is
 worked out by the program from the feeds alone: <strong>the AI is not used at all</strong> for it, so no model ever forms a view
 about what an outlet did or did not cover. A story is listed only when all of these are true:</p>
 <ul>
@@ -532,6 +582,8 @@ def write_site(stories: list, cfg: dict, out_dir: str, meta: dict, system_prompt
 
     write("index.html", build_index(stories, cfg, meta, blindspots))
     write("how-it-works.html", build_how(cfg, meta, system_prompt))
+    if cfg.get("blindspots", {}).get("enabled", True):
+        write("blindspots.html", build_blindspots_page(cfg, blindspots or [], meta))
     if word_stats:
         write("words.html", build_words(cfg, word_stats, meta))
     for name, text in build_archive_pages(archive_entries or [], cfg).items():

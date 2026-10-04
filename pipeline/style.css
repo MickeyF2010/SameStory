@@ -55,7 +55,29 @@ a:focus-visible { outline: 3px solid var(--link); outline-offset: 2px; border-ra
 /* Intro and legend */
 .intro { display: grid; gap: 1.25rem; padding: 1.75rem 0 0.25rem; }
 @media (min-width: 900px) { .intro { grid-template-columns: 1fr 1fr; align-items: start; gap: 3rem; } }
+.intro-main { display: flex; flex-direction: column; gap: 0.65rem; }
 .updated { margin: 0; color: var(--muted); font-size: 0.95rem; max-width: 52ch; }
+.spot-pill-p { margin: 0; }
+.spot-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0.75rem;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--ink);
+  text-decoration: none;
+  font-weight: 550;
+  font-size: 0.88rem;
+  width: fit-content;
+}
+.spot-pill:hover { border-color: var(--ink); text-decoration: none; }
+.spot-pill-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
+.spot-pill.has-spots .spot-pill-dot { background: #D97706; }
+@media (prefers-color-scheme: dark) {
+  .spot-pill.has-spots .spot-pill-dot { background: #FBBF24; }
+}
 .legend { font-size: 0.9rem; color: var(--muted); border-left: 3px solid var(--line); padding-left: 1rem; }
 .legend p { margin: 0 0 0.35rem; }
 .legend p:last-child { margin: 0; }
@@ -150,6 +172,8 @@ pre { white-space: pre-wrap; background: var(--surface); border: 1px solid var(-
 
 
 /* Blindspots (computed by code, never by the AI) */
+.spots-page { padding: 2rem 0 1rem; }
+.spots-page h1 { font-size: clamp(1.8rem, 4vw, 2.4rem); margin: 0 0 0.75rem; }
 .spots { margin: 3.5rem 0 1rem; }
 .spots h2 { font-size: clamp(1.3rem, 2.6vw, 1.7rem); margin: 0 0 0.75rem; }
 .spot-intro { margin: 0 0 1.25rem; max-width: 78ch; color: var(--muted); font-size: 0.95rem; }
@@ -159,6 +183,10 @@ pre { white-space: pre-wrap; background: var(--surface); border: 1px solid var(-
 .spot-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 0.8rem; max-width: 70ch; }
 .spot-item { display: flex; flex-direction: column; gap: 0.2rem; }
 .spot-check { margin: 0.7rem 0 0; max-width: 78ch; color: var(--muted); font-size: 0.82rem; }
+.empty-spots { margin-top: 1.5rem; padding: 1.25rem 1.5rem; background: var(--panel); border-radius: 4px; max-width: 78ch; }
+.empty-spots h3 { margin: 0 0 0.4rem; font-size: 1.1rem; }
+.empty-spots p { margin: 0 0 0.5rem; font-size: 0.95rem; color: var(--muted); }
+.empty-spots .spot-check { margin: 0.5rem 0 0; }
 
 /* Words */
 .words { padding: 2rem 0 1rem; }

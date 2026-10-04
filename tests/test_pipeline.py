@@ -346,7 +346,8 @@ class BuildTests(unittest.TestCase):
             self.assertIn("No framing description yet", index)
             self.assertIn("prompt text &lt;b&gt;", how)
             self.assertTrue(os.path.exists(os.path.join(d, "style.css")))
-            data = json.load(open(os.path.join(d, "data.json")))
+            with open(os.path.join(d, "data.json"), encoding="utf-8") as fh:
+                data = json.load(fh)
             self.assertEqual(len(data["stories"]), 2)
 
     def test_how_page_wording_for_required_and_relaxed_rules(self):
@@ -367,7 +368,7 @@ class BuildTests(unittest.TestCase):
             build.write_site(demo, cfg, d, {"generated": NOW, "demo": True, "prompt_version": "5"}, "p", arc.sorted_entries())
             month = build.month_file(NOW.astimezone(build.LONDON).strftime("%Y-%m"))
             self.assertTrue(os.path.exists(os.path.join(d, month)))
-            for name in ("index.html", "how-it-works.html", "archive.html", month):
+            for name in ("index.html", "how-it-works.html", "blindspots.html", "archive.html", month):
                 with open(os.path.join(d, name), encoding="utf-8") as fh:
                     page = fh.read()
                 self.assertIn("Content-Security-Policy", page)
@@ -925,6 +926,43 @@ class BlindspotTests(unittest.TestCase):
         html_out = build.build_blindspots(out, dict(BS_CFG, site={"title": "T", "tagline": "t"}))
         self.assertNotIn("<script>", html_out)
         self.assertIn("&lt;script&gt;", html_out)
+
+    def test_blindspots_page_renders_empty_state_and_escapes(self):
+        cfg = dict(BS_CFG, site={"title": "Same Story", "tagline": "t"})
+        html_empty = build.build_blindspots_page(cfg, [])
+        self.assertIn("Covered on one side only", html_empty)
+        self.assertIn("No one-sided coverage detected right now", html_empty)
+        self.assertNotIn("<script", html_empty)
+        self.assertNotIn(" style=", html_empty)
+        for bad in ("ignored", "ignores", "ignoring", "omits", "suppressed", "did not report", "failed to"):
+            self.assertNotIn(bad, html_empty.lower())
+
+    def test_blindspots_page_renders_items_and_intro_pill(self):
+        articles, groups, vectors = bs_fixture()
+        watch = {}
+        blindspots.update(watch, articles, groups, vectors, bs_status(), BS_CFG, NOW - timedelta(hours=7))
+        out = blindspots.update(watch, articles, groups, vectors, bs_status(), BS_CFG, NOW)
+        cfg = dict(BS_CFG, site={"title": "Same Story", "tagline": "t"})
+        html_out = build.build_blindspots_page(cfg, out)
+        self.assertIn("Covered by 2", html_out)
+        self.assertIn("spot-list-all", html_out)
+
+        idx_with_spots = build.build_index([], cfg, {"generated": NOW}, spots=out)
+        self.assertIn("One-sided coverage: 1 active", idx_with_spots)
+        self.assertIn("spot-pill has-spots", idx_with_spots)
+
+        idx_no_spots = build.build_index([], cfg, {"generated": NOW}, spots=[])
+        self.assertIn("One-sided coverage: 0 active", idx_no_spots)
+        self.assertIn("spot-pill", idx_no_spots)
+
+    def test_disabled_blindspots_renders_no_pill_and_no_page(self):
+        cfg = json.loads(json.dumps(load_cfg()))
+        cfg["blindspots"]["enabled"] = False
+        idx = build.build_index([], cfg, {"generated": NOW}, spots=[])
+        self.assertNotIn("spot-pill", idx)
+        with tempfile.TemporaryDirectory() as d:
+            build.write_site([], cfg, d, {"generated": NOW, "prompt_version": "1"}, "p")
+            self.assertFalse(os.path.exists(os.path.join(d, "blindspots.html")))
 
 
 class WordTrackerTests(unittest.TestCase):
