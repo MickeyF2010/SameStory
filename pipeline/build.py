@@ -474,8 +474,18 @@ def words_chart_html(pair: dict, min_headlines: int) -> str:
     return "".join(lines)
 
 
-def build_words(cfg: dict, stats: dict) -> str:
+def _archive_line(meta: dict) -> str:
+    a = meta.get("archive") or {}
+    if not a:
+        return ""
+    return (f"The archive that these counts come from holds {a.get('stories', 0)} stories and "
+            f"{a.get('headlines', 0)} headlines in total, and gains more with every update.")
+
+
+def build_words(cfg: dict, stats: dict, meta: Optional[dict] = None) -> str:
     st = words_mod.settings(cfg)
+    meta = meta or {}
+    archive_line = _archive_line(meta)
     totals, pairs = stats["totals"], stats["pairs"]
     left_n, right_n = totals.get("left", 0), totals.get("right", 0)
     if not stats["headline_count"]:
@@ -503,7 +513,7 @@ Whole words only, including simple word forms ("migrant" also matches "migrants"
 ("asylum-seeker" and "asylum seeker" are counted together). Figures are the share of that column's own headlines that used the
 term, so a column that publishes more is not flattered by the count.</p>
 <p>Headlines counted: {stats['headline_count']} in total, {left_n} from left-leaning outlets and {right_n} from right-leaning
-ones. A pair is only shown for a column once it has at least {esc(stats['min_headlines'])} headlines. Words chosen here, and the
+ones. {archive_line} A pair is only shown for a column once it has at least {esc(stats['min_headlines'])} headlines. Words chosen here, and the
 method, are published on <a href="how-it-works.html">How it works</a>.</p>
 </div>
 {''.join(pairs_html)}
@@ -523,7 +533,7 @@ def write_site(stories: list, cfg: dict, out_dir: str, meta: dict, system_prompt
     write("index.html", build_index(stories, cfg, meta, blindspots))
     write("how-it-works.html", build_how(cfg, meta, system_prompt))
     if word_stats:
-        write("words.html", build_words(cfg, word_stats))
+        write("words.html", build_words(cfg, word_stats, meta))
     for name, text in build_archive_pages(archive_entries or [], cfg).items():
         write(name, text)
     with open(os.path.join(HERE, "style.css"), encoding="utf-8") as src:
@@ -533,6 +543,7 @@ def write_site(stories: list, cfg: dict, out_dir: str, meta: dict, system_prompt
         "generated": meta["generated"].isoformat(),
         "dropped_as_unrelated": meta.get("dropped", []),
         "blindspots": meta.get("blindspots", []),
+        "archive": meta.get("archive", {}),
         "stories": [
             {
                 "id": s.id,

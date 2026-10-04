@@ -24,6 +24,12 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 log = logging.getLogger("samestory")
 
 
+def archive_counts(archive) -> tuple:
+    """(stories, headlines) currently held. Printed on every run so a reset is obvious in the log."""
+    entries = archive.entries.values()
+    return len(archive.entries), sum(len(e.get("headlines") or []) for e in entries)
+
+
 def load_config(path: str) -> dict:
     with open(path, encoding="utf-8") as fh:
         return json.load(fh)
@@ -78,6 +84,7 @@ def main(argv=None) -> int:
     parser.add_argument("--debug-clusters", action="store_true", help="print story groups and exit")
     parser.add_argument("-v", "--verbose", action="store_true")
     args = parser.parse_args(argv)
+    arg_was_default = args.archive == os.path.join(ROOT, "data", "archive.json")
 
     logging.basicConfig(level=logging.DEBUG if args.verbose else logging.INFO, format="%(levelname)s %(message)s")
     cfg = load_config(args.config)
@@ -126,6 +133,13 @@ def main(argv=None) -> int:
     except ArchiveError as exc:
         log.error("%s", exc)
         return 1
+    loaded_stories, loaded_heads = archive_counts(archive)
+    log.info("Archive loaded: %d stories, %d headlines stored", loaded_stories, loaded_heads)
+    if not archive.path:
+        log.info("No archive path given: this run will not save one.")
+    elif arg_was_default and loaded_stories == 0:
+        log.warning("The archive file did not exist, so this run starts a new one. "
+                    "If you expected existing history, the file was not in place before the run.")
 
     story_list = stories_mod.select_stories(articles, groups, vectors, cfg["settings"]) if articles else []
     removed = removed_keys(cfg.get("archive"))
@@ -179,7 +193,12 @@ def main(argv=None) -> int:
 
     new = archive.record(story_list, now)
     archive.save(now)   # also saves the blindspot watch state kept in the same file
-    log.info("Archive: %d new, %d in total", new, len(archive.entries))
+    total_stories, total_heads = archive_counts(archive)
+    log.info("Archive: %d new story/stories this run; %d stories and %d headlines now stored",
+             new, total_stories, total_heads)
+    meta["archive"] = {"path": args.archive, "stories": total_stories, "headlines": total_heads,
+                       "loaded_stories": loaded_stories, "loaded_headlines": loaded_heads,
+                       "new_this_run": new}
 
     word_stats = words_mod.compute(archive.sorted_entries(), cfg, now)
     build.write_site(story_list, cfg, args.out, meta, system_prompt, archive.sorted_entries(),
