@@ -15,7 +15,7 @@ import os
 import sys
 from datetime import datetime, timezone
 
-from . import blindspots, build, compare, fetch, match, sample, stories as stories_mod, words as words_mod
+from . import archive as archive_mod, blindspots, build, compare, fetch, match, sample, stories as stories_mod, words as words_mod
 from .archive import Archive, ArchiveError, is_removed, removed_keys
 from .cache import Cache
 from .llm import LLM, LLMError
@@ -173,8 +173,13 @@ def main(argv=None) -> int:
     # the archive file, so a story has to go uncovered for several runs before it is shown.
     spots = []
     if cfg.get("blindspots", {}).get("enabled", True):
+        bs_stats = {}
         spots = blindspots.update(archive.blindspot_watch, articles, groups, vectors, source_status,
-                                  cfg, now, method, exclude_urls=removed, removed=removed)
+                                  cfg, now, method, exclude_urls=removed, removed=removed,
+                                  court_re=archive_mod.court_pattern(cfg.get("archive", {}).get("court_words", archive_mod.DEFAULT_COURT_WORDS)),
+                                  stats=bs_stats)
+        meta["blindspot_stats"] = bs_stats
+        log.info("Blindspot checks: %s", ", ".join(f"{k}={v}" for k, v in sorted(bs_stats.items())))
         shown_urls = {a.url for s in story_list for a in s.picks.values()}
         shown_urls |= {a.url for s in story_list for a in s.others}
         spots = [b for b in spots if not ({a.url for a in b.articles} & shown_urls)]

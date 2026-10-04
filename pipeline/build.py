@@ -237,7 +237,7 @@ def build_blindspots_page(cfg: dict, spots: list, meta: Optional[dict] = None) -
         content = (f'<div class="empty-spots">'
                    f'<h3>No one-sided coverage detected right now</h3>'
                    f'<p>Every story currently tracked is either covered across both sides or has not met the strict criteria to be listed here.</p>'
-                   f'<p class="spot-check">To prevent false claims, a story only appears here if it is covered by at least 2 outlets on one side, 0 on the other, every opposing feed is verified healthy and recent, and the gap persists across checks spanning at least {esc(min_hours)} hours.</p>'
+                   f'<p class="spot-check">To prevent false claims, a story only appears here if it is about politics and not a court case, it is covered by at least 2 outlets on one side and 0 on the other, every opposing feed is verified healthy and reaches back to the story\'s first headline, and the gap persists across checks spanning at least {esc(min_hours)} hours.</p>'
                    f'</div>')
     body = f"""{demo_banner}
 <div class="spots-page">
@@ -363,6 +363,9 @@ about what an outlet did or did not cover. A story is listed only when all of th
 <ul>
 <li>at least {bs_min} different outlets in one column covered it, and no outlet at all in the other column did;</li>
 <li>every feed in the other column loaded and returned items in that same run, so a feed that was down, empty or stale can never look like missing coverage;</li>
+<li>the other column's feeds reach back at least as far as the story's first headline, so a short feed is never taken as proof that an outlet did not cover something published before the feed's oldest item;</li>
+<li>it is about politics, meaning a headline or standfirst contains a word from the published politics word list (some feeds are site-wide, and the left and right columns do not have the same number of them);</li>
+<li>it does not mention court proceedings, so a live criminal case is never labelled as one-sided coverage;</li>
 <li>no headline in the other column, anywhere in the {s['max_age_hours']}h window, was even loosely similar to any headline in the story (below the match threshold);</li>
 <li>it has stayed that way for {bs_runs} checks spread over at least {bs_hours} hours. Any run in which the other column turns out to cover it removes it again.</li>
 </ul>
@@ -595,6 +598,7 @@ def write_site(stories: list, cfg: dict, out_dir: str, meta: dict, system_prompt
         "generated": meta["generated"].isoformat(),
         "dropped_as_unrelated": meta.get("dropped", []),
         "blindspots": meta.get("blindspots", []),
+        "blindspot_stats": meta.get("blindspot_stats", {}),
         "archive": meta.get("archive", {}),
         "stories": [
             {

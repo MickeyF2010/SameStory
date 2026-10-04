@@ -775,7 +775,8 @@ class FeedStatusTests(unittest.TestCase):
 
 BS_CFG = {
     "blindspots": {"enabled": True, "min_outlets": 2, "tfidf_max_similarity": 0.15,
-                   "min_runs": 2, "min_hours": 6, "max_shown": 10},
+                   "min_runs": 2, "min_hours": 6, "max_shown": 10,
+                   "politics_terms": ["ministers", "minister", "chancellor", "mp"]},
     "sources": [
         {"id": "l1", "name": "L One", "lean": "left", "feeds": []},
         {"id": "l2", "name": "L Two", "lean": "left", "feeds": []},
@@ -785,9 +786,13 @@ BS_CFG = {
 }
 
 
-def bs_status(**over):
-    base = {"l1": {"name": "L One", "lean": "left", "ok": True}, "l2": {"name": "L Two", "lean": "left", "ok": True},
-            "r1": {"name": "R One", "lean": "right", "ok": True}, "r2": {"name": "R Two", "lean": "right", "ok": True}}
+def bs_status(oldest_hours=30, **over):
+    """Feed status for the four fixture outlets. `oldest_hours`: how far back every feed reaches."""
+    oldest = (NOW - timedelta(hours=oldest_hours)).isoformat()
+    base = {"l1": {"name": "L One", "lean": "left", "ok": True, "oldest": oldest},
+            "l2": {"name": "L Two", "lean": "left", "ok": True, "oldest": oldest},
+            "r1": {"name": "R One", "lean": "right", "ok": True, "oldest": oldest},
+            "r2": {"name": "R Two", "lean": "right", "ok": True, "oldest": oldest}}
     for k, v in over.items():
         base[k] = dict(base[k], ok=v)
     return base
@@ -803,6 +808,136 @@ def bs_fixture():
     vectors = match.tfidf_vectors(articles)
     groups = [[0, 1], [2]]
     return articles, groups, vectors
+
+
+def mirror_fixture(title_a, title_b, side="left", hours=(2, 3)):
+    """A two-outlet, one-sided story on `side`, plus one unrelated story on the opposite side."""
+    mine = ("l1", "L One", "l2", "L Two") if side == "left" else ("r1", "R One", "r2", "R Two")
+    other = ("r1", "R One") if side == "left" else ("l1", "L One")
+    articles = [
+        Article(mine[0], mine[1], side, title_a, "", "https://e.com/a", NOW - timedelta(hours=hours[0])),
+        Article(mine[2], mine[3], side, title_b, "", "https://e.com/b", NOW - timedelta(hours=hours[1])),
+        Article(other[0], other[1], "right" if side == "left" else "left", "Bus timetable changes announced for spring", "",
+                "https://e.com/c", NOW - timedelta(hours=4)),
+    ]
+    return articles, [[0, 1], [2]], match.tfidf_vectors(articles)
+
+
+def two_runs(articles, groups, vectors, status=None, **kw):
+    watch, stats = {}, {}
+    blindspots.update(watch, articles, groups, vectors, status or bs_status(), BS_CFG, NOW - timedelta(hours=7), stats=stats, **kw)
+    out = blindspots.update(watch, articles, groups, vectors, status or bs_status(), BS_CFG, NOW, stats=stats, **kw)
+    return out, watch, stats
+
+
+class BlindspotFairnessTests(unittest.TestCase):
+    """The rules below are the ones found missing when Kernel's blindspots were reviewed (see change log)."""
+
+    def test_same_rules_apply_to_left_only_and_right_only(self):
+        for side in ("left", "right"):
+            out, _, _ = two_runs(*mirror_fixture("Ministers face questions over ferry deal", "Ferry deal: ministers questioned", side))
+            self.assertEqual([b.side for b in out], [side], side)
+
+    def test_non_political_story_is_never_listed_on_either_side(self):
+        for side in ("left", "right"):
+            out, watch, stats = two_runs(*mirror_fixture("Man jailed after Leeds warehouse fire", "Leeds warehouse fire man jailed", side))
+            self.assertEqual(out, [], side)
+            self.assertEqual(stats["not_political"], 2, side)
+            self.assertEqual(watch, {}, side)   # not even watched
+
+    def test_politics_words_match_whole_words_only(self):
+        out, _, stats = two_runs(*mirror_fixture("Mpeg licensing dispute reaches court of appeal", "Mpeg dispute: licence row", "left"))
+        self.assertEqual(out, [])
+        self.assertGreaterEqual(stats["not_political"], 1)
+
+    def test_feed_that_does_not_reach_back_to_the_first_headline_blocks_it(self):
+        arts = mirror_fixture("Ministers face questions over ferry deal", "Ferry deal: ministers questioned", "right", hours=(20, 19))
+        # the left feeds only reach back 5 hours, but the story began 20 hours ago
+        out, watch, stats = two_runs(*arts, status=bs_status(oldest_hours=5))
+        self.assertEqual(out, [])
+        self.assertEqual(stats["feed_too_short"], 2)
+        # and with feeds that do reach back far enough it is shown
+        out, _, _ = two_runs(*arts, status=bs_status(oldest_hours=30))
+        self.assertEqual(len(out), 1)
+
+    def test_a_feed_with_no_oldest_date_cannot_support_a_claim(self):
+        arts = mirror_fixture("Ministers face questions over ferry deal", "Ferry deal: ministers questioned", "right")
+        status = bs_status()
+        status["l1"].pop("oldest")
+        out, _, stats = two_runs(*arts, status=status)
+        self.assertEqual(out, [])
+        self.assertEqual(stats["feed_too_short"], 2)
+
+    def test_reach_failure_leaves_the_watch_state_untouched(self):
+        arts = mirror_fixture("Ministers face questions over ferry deal", "Ferry deal: ministers questioned", "right", hours=(20, 19))
+        watch = {}
+        blindspots.update(watch, arts[0], arts[1], arts[2], bs_status(oldest_hours=30), BS_CFG, NOW - timedelta(hours=7))
+        before = {k: dict(v) for k, v in watch.items()}
+        blindspots.update(watch, arts[0], arts[1], arts[2], bs_status(oldest_hours=5), BS_CFG, NOW)
+        self.assertEqual(before, watch)
+
+    def test_court_related_stories_are_excluded(self):
+        court_re = archive.court_pattern(archive.DEFAULT_COURT_WORDS)
+        arts = mirror_fixture("MP charged over expenses, ministers say", "MP charged: ministers respond", "right")
+        out, watch, stats = two_runs(*arts, court_re=court_re)
+        self.assertEqual(out, [])
+        self.assertEqual(stats["court"], 2)
+        self.assertEqual(watch, {})
+        # the same headlines without the court words are listed
+        out, _, _ = two_runs(*mirror_fixture("MP resigns, ministers say", "MP resigns: ministers respond", "right"), court_re=court_re)
+        self.assertEqual(len(out), 1)
+
+    def test_stats_explain_why_things_were_not_listed(self):
+        _, _, stats = two_runs(*mirror_fixture("Ministers face questions over ferry deal", "Ferry deal: ministers questioned", "right"),
+                               status=bs_status(l1=False))
+        self.assertEqual(stats["feed_not_ready"], 2)
+
+
+class FeedStatusTests(unittest.TestCase):
+    def test_status_records_how_far_back_each_outlet_reaches(self):
+        from unittest import mock
+        now = datetime.now(timezone.utc)
+
+        def rss(hours):
+            items = "".join(
+                f"<item><title>T{h}</title><link>https://news.test/{h}</link>"
+                f"<pubDate>{(now - timedelta(hours=h)).strftime('%a, %d %b %Y %H:%M:%S GMT')}</pubDate></item>" for h in hours)
+            return f'<?xml version="1.0"?><rss version="2.0"><channel>{items}</channel></rss>'.encode()
+
+        cfg = {"settings": {"max_age_hours": 48, "per_feed_limit": 50},
+               "sources": [{"id": "a", "name": "A", "lean": "left", "feeds": ["https://a.test/rss"]}]}
+        with mock.patch.object(fetch, "fetch_url", lambda url, timeout=20: rss([1, 5, 30])):
+            _, status = fetch.fetch_all_with_status(cfg)
+        oldest = datetime.fromisoformat(status["a"]["oldest"])
+        self.assertAlmostEqual((now - oldest).total_seconds() / 3600, 30, delta=0.1)
+        self.assertTrue(status["a"]["ok"])
+
+
+class ConfigSanityTests(unittest.TestCase):
+    def test_politics_words_published_and_express_rating_matches_allsides(self):
+        cfg = load_cfg()
+        self.assertGreater(len(cfg["blindspots"]["politics_terms"]), 20)
+        express = next(x for x in cfg["sources"] if x["id"] == "express")
+        self.assertIn("Lean Right", express["rating"])
+        self.assertNotIn("Not Found", express["rating"])
+
+    def test_how_page_lists_the_reach_politics_and_court_rules(self):
+        how = build.build_how(load_cfg(), {"generated": NOW, "prompt_version": "5"}, "p")
+        self.assertIn("reach back at least as far as the story", how)
+        self.assertIn("it is about politics", how)
+        self.assertIn("does not mention court proceedings", how)
+
+
+class RatingNoteTests(unittest.TestCase):
+    def test_rating_note_makes_no_false_claim_about_the_express(self):
+        note = load_cfg()["site"]["lean_rating_note"]
+        self.assertNotIn("Express has no AllSides", note)
+        self.assertNotIn("except the Daily Express", note)
+
+    def test_blindspots_page_states_the_politics_court_and_reach_rules(self):
+        page = build.build_blindspots_page(load_cfg(), [], {"generated": NOW})
+        self.assertIn("about politics and not a court case", page)
+        self.assertIn("reaches back to the story", page)
 
 
 class BlindspotTests(unittest.TestCase):
@@ -865,9 +1000,9 @@ class BlindspotTests(unittest.TestCase):
 
     def test_centre_outlets_do_not_count_as_either_side(self):
         articles = [
-            Article("r1", "R One", "right", "Ferry contract row grows", "", "https://e.com/r1", NOW),
-            Article("r2", "R Two", "right", "Ferry contract questions mount", "", "https://e.com/r2", NOW),
-            Article("bbc", "BBC", "centre", "Ferry contract explained", "", "https://e.com/bbc", NOW),
+            Article("r1", "R One", "right", "Ministers face ferry contract row", "", "https://e.com/r1", NOW),
+            Article("r2", "R Two", "right", "Ministers questioned over ferry contract", "", "https://e.com/r2", NOW),
+            Article("bbc", "BBC", "centre", "Ferry contract explained by ministers", "", "https://e.com/bbc", NOW),
         ]
         vectors = match.tfidf_vectors(articles)
         groups = match.cluster(vectors, 0.0)
